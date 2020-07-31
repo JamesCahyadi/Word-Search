@@ -32,6 +32,10 @@ class Board:
         self.rows = rows
         self.cols = cols
         self.arr = [[[0, COLOURS[0]] for col in range(self.cols)] for row in range(self.rows)]
+        self.ans = []
+        self.words = []
+        self.wordBankColours = []
+        self.clicked = []
 
     def draw(self):
         # Draw the board
@@ -49,27 +53,30 @@ class Board:
                 (int(col * Board.TILE_WIDTH + ((Board.TILE_WIDTH - letter_label.get_width()) / 2))
                 , int(row * Board.TILE_HEIGHT + ((Board.TILE_HEIGHT - letter_label.get_height()) / 2))))
     
-    def draw_wordBank(self, wordBank):
+    def draw_wordBank(self):
         # WORDS label
         # title_label = Board.TITLE_FONT.render("WORDS", 1, BLACK)
         # WIN.blit(title_label, (self.cols * Board.TILE_WIDTH + 10, 10))
         # Wordbank words
-        for i in range(len(wordBank)):
-            wb_label = Board.WORD_BANK_FONT.render(wordBank[i][0], 1,wordBank[i][1])
+        for i in range(len(self.words)):
+            wb_label = Board.WORD_BANK_FONT.render(self.words[i], 1, self.wordBankColours[i])
             WIN.blit(wb_label, (self.cols * Board.TILE_WIDTH + 10, (wb_label.get_height() * i * 2) + 10))
 
 
     def generate_words(self, numWords):
         # generate a list of random words
         rw = RandomWords()
-        words = rw.random_words(count=numWords)
-        # convert each word to uppercase
-        upperWords = [[word.upper(), CORAL] for word in words]
-        return upperWords
+        randWords = rw.random_words(count=numWords)
 
-    def setup(self, words):
-        answers = {}
-        for word in words:
+        for word in randWords:
+            # convert each word to uppercase and append to words list
+            self.words.append(word.upper())
+            # default colour for word bank words
+            self.wordBankColours.append(CORAL)
+
+
+    def setup(self):
+        for word in self.words:
 
             wordLength = len(word)
             nextWord = False
@@ -141,14 +148,51 @@ class Board:
                             for i in range(wordLength):
                                 ans_value.append([row + (i * directions[direction][1]), col + (i * directions[direction][0])])
                                 self.arr[row + (i * directions[direction][1])][col + (i * directions[direction][0])][0] = word[i]
-                            answers[word] = ans_value
+                            self.ans.append(ans_value)
                             break
-        return answers
 
-        # def checkSolved(self, wordBank, words, answers, clickedRow, clickedCol):
-        #     for word in words:
-        #         for ans_pos in answers[word]:
+        for ans_pos_word in self.ans:
+            for ans_pos_letter in ans_pos_word:
+                self.arr[ans_pos_letter[0]][ans_pos_letter[1]][1] = GREEN
 
+    def checkSolved(self, row, col):
+        # append the clicked row and col position onto self.clicked as a list
+        self.clicked.append([row, col])
+        # The first letter clicked will always be coloured to prevent spam clicking to reveal words
+        if len(self.clicked) == 1:
+            self.arr[row][col][1] = RED
+        # more than two elements in clickd list
+        else:
+            # iterate through the answers list, one word (sublist) at a time
+            #  want to check matches on a per word basis
+            for ans_pos_word in self.ans:
+                # valid means the clicked are meaningful clicks that are on the right track of making a word
+                valid = False
+                # matches is the number of list pairs that match in the clicked list and the answers sublist
+                matches = 0
+                # iterate through the clicked list
+                for clicked_pos in self.clicked:
+                    if clicked_pos in ans_pos_word:
+                        # if the clicked pos matches with a pos in the answers sublist, add a match 
+                        matches += 1
+                        # change this colour because it is a letter that is part of a word
+                        self.arr[clicked_pos[0]][clicked_pos[1]][1] = RED
+                
+                # word is completed
+                if matches and matches == len(self.clicked):
+                    valid = True
+                    # cross off the word somehow...
+                    break
+
+            # clicks are forming a word, reset the clicked array and undo the colour changes that were made to clicked list
+            if not valid:
+                print("invalid")
+                # reset the previously clicked positions to black
+                for clicked_pos in self.clicked:
+                    self.arr[clicked_pos[0]][clicked_pos[1]][1] = BLACK
+                # reset the clicked array
+                self.clicked = []
+                print(self.clicked)
 
 
                                 
@@ -162,21 +206,16 @@ def main():
     board = Board(boardRows, boardCols)
 
     # wordBank will contain a random word and colour code
-    wordBank = board.generate_words(numWords)
-
-    # words contains only the words from wordBank
-    words = []
-    for word in wordBank:
-        words.append(word[0])
+    board.generate_words(numWords)
 
     # answers is a dict that contains where each letter of each word is on the board
-    answers = board.setup(words)
-
+    board.setup()
+    print(board.ans)
 
     def redraw():
         pygame.draw.rect(WIN, BLACK, (0, 0, WIDTH, HEIGHT))
         board.draw()
-        board.draw_wordBank(wordBank)
+        board.draw_wordBank()
         
 
         pygame.display.update()
@@ -193,11 +232,7 @@ def main():
                 col = mouseX // Board.TILE_WIDTH
                 row = mouseY // Board.TILE_HEIGHT
                 if(row >= 0 and col >= 0 and row < boardRows and col < boardCols):
-                    # board.checkSolved(wordBank, words, answers, col, row)
-                    board.arr[row][col][1] = RED
-
-        print(wordBank)
-        print('---')
-        print(answers)
+                    board.checkSolved(row, col)
+                    # board.arr[row][col][1] = RED
 
 main()
