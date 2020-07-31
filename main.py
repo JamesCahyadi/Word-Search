@@ -31,11 +31,22 @@ class Board:
     def __init__(self, rows, cols):
         self.rows = rows
         self.cols = cols
-        self.arr = [[[0, COLOURS[0]] for col in range(self.cols)] for row in range(self.rows)]
+        self.board = []
+        self.boardColours = []
         self.ans = []
         self.words = []
         self.wordBankColours = []
         self.clicked = []
+
+        for row in range(self.rows):
+            boardRow = []
+            boardRowColours = []
+            for col in range(self.cols):
+                boardRow.append(0)
+                boardRowColours.append(BLACK)
+
+            self.board.append(boardRow)
+            self.boardColours.append(boardRowColours)
 
     def draw(self):
         # Draw the board
@@ -44,11 +55,11 @@ class Board:
                 # Draw the tiles
                 pygame.draw.rect(WIN, BEIGE, (col * Board.TILE_WIDTH, row * Board.TILE_HEIGHT, Board.TILE_WIDTH, Board.TILE_WIDTH))
                 # Replace the 0 tile with a random letters
-                if self.arr[row][col][0] == 0:
+                if self.board[row][col] == 0:
                     letter = random.choice(string.ascii_uppercase)
-                    self.arr[row][col][0] = letter
+                    self.board[row][col] = letter
 
-                letter_label = Board.TILE_FONT.render(self.arr[row][col][0], 1, self.arr[row][col][1])
+                letter_label = Board.TILE_FONT.render(self.board[row][col], 1, self.boardColours[row][col])
                 WIN.blit(letter_label, 
                 (int(col * Board.TILE_WIDTH + ((Board.TILE_WIDTH - letter_label.get_width()) / 2))
                 , int(row * Board.TILE_HEIGHT + ((Board.TILE_HEIGHT - letter_label.get_height()) / 2))))
@@ -134,7 +145,7 @@ class Board:
                         # print(direction)
                         # Ensure there will be no overwrites
                         for i in range(wordLength):
-                            pos = self.arr[row + (i * directions[direction][1])][col + (i * directions[direction][0])][0]
+                            pos = self.board[row + (i * directions[direction][1])][col + (i * directions[direction][0])]
                             # If position isn't empty (contains a letter already) find a new direction
                             if pos != 0 and pos != word[i]:
                                 break
@@ -147,20 +158,21 @@ class Board:
                             ans_value = []
                             for i in range(wordLength):
                                 ans_value.append([row + (i * directions[direction][1]), col + (i * directions[direction][0])])
-                                self.arr[row + (i * directions[direction][1])][col + (i * directions[direction][0])][0] = word[i]
+                                self.board[row + (i * directions[direction][1])][col + (i * directions[direction][0])] = word[i]
                             self.ans.append(ans_value)
                             break
 
+        # Highlight the answers
         for ans_pos_word in self.ans:
             for ans_pos_letter in ans_pos_word:
-                self.arr[ans_pos_letter[0]][ans_pos_letter[1]][1] = GREEN
+                self.boardColours[ans_pos_letter[0]][ans_pos_letter[1]] = GREEN
 
     def checkSolved(self, row, col):
         # append the clicked row and col position onto self.clicked as a list
         self.clicked.append([row, col])
         # The first letter clicked will always be coloured to prevent spam clicking to reveal words
         if len(self.clicked) == 1:
-            self.arr[row][col][1] = RED
+            self.boardColours[row][col] = RED
         # more than two elements in clickd list
         else:
             # iterate through the answers list, one word (sublist) at a time
@@ -176,21 +188,31 @@ class Board:
                         # if the clicked pos matches with a pos in the answers sublist, add a match 
                         matches += 1
                         # change this colour because it is a letter that is part of a word
-                        self.arr[clicked_pos[0]][clicked_pos[1]][1] = RED
+                        self.boardColours[clicked_pos[0]][clicked_pos[1]] = RED
                 
-                # word is completed
+                # letter being clicked are of the some word
                 if matches and matches == len(self.clicked):
+
+                    if matches == len(ans_pos_word):
+                        print("word is complete")
+                        self.wordBankColours[self.ans.index(ans_pos_word)] = GREEN
+
+                        # for ans_pos in self.ans[self.ans.index(ans_pos_word)]:
+                        #     print(ans_pos)
+                        #     self.wordBankColours[ans_pos[0]][ans_pos[1]] = GREEN
+
+                    
                     valid = True
-                    # cross off the word somehow...
                     break
 
-            # clicks are forming a word, reset the clicked array and undo the colour changes that were made to clicked list
+
+            # clicks are forming a word, reset the clicked boarday and undo the colour changes that were made to clicked list
             if not valid:
                 print("invalid")
                 # reset the previously clicked positions to black
                 for clicked_pos in self.clicked:
-                    self.arr[clicked_pos[0]][clicked_pos[1]][1] = BLACK
-                # reset the clicked array
+                    self.boardColours[clicked_pos[0]][clicked_pos[1]] = BLACK
+                # reset the clicked boarday
                 self.clicked = []
                 print(self.clicked)
 
@@ -233,6 +255,6 @@ def main():
                 row = mouseY // Board.TILE_HEIGHT
                 if(row >= 0 and col >= 0 and row < boardRows and col < boardCols):
                     board.checkSolved(row, col)
-                    # board.arr[row][col][1] = RED
+                    # board.board[row][col][1] = RED
 
 main()
