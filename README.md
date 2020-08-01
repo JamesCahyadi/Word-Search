@@ -2,7 +2,8 @@
 A classic word search that dynamically generates a board with random words each time!
 
 ### Main Menu
-In the main menu, you can alter parameters, such the board size and the number of words in the word bank.
+In the main menu, you can alter parameters, such as the board size and the number of words in the word bank.
+
 ![menu](https://media.giphy.com/media/kDx9XcPTgu0VWv0Nly/giphy.gif)
 
 ### Gameplay
