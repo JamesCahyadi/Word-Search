@@ -4,17 +4,18 @@ import random
 import string
 from random_words import RandomWords
 import os
-
-
-pygame.font.init()
+pygame.init()
 
 WIDTH, HEIGHT = 1030, 720
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Word Search")
 
-#Load Image
+# Load Image
 MENU_BACKGROUND = pygame.transform.scale(
     pygame.image.load(os.path.join("assets", "menu_background.jpg")), (WIDTH, HEIGHT))
+
+# Load Sound
+SOLVE_SOUND = pygame.mixer.Sound("assets/solved.wav")
 
 BEIGE = (249, 228, 183)
 BLACK = (0, 0, 0)
@@ -276,6 +277,7 @@ class Board:
                 self.boardColours[row][col] = YELLOW
 
     def word_completed(self, index):
+        SOLVE_SOUND.play()
         # the clicked button should be dark blue, the word corresponding to that button should now be coral
         self.wordBankColours[index] = CORAL
         self.buttonColours[index] = DARKBLUE
