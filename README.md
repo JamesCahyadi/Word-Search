@@ -1,5 +1,5 @@
 # Word-Search
-A classic word search that dynamically generates a random board and random words each time!
+A classic word search that dynamically generates a board with random words each time!
 
 ### Main Menu
 In the main menu, you can alter parameters, such the board size and the number of words in the word bank.
